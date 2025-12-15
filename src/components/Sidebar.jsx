@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaUser, FaUsers, FaUserFriends, FaHandHoldingHeart, FaBoxOpen, FaCog, FaSignOutAlt, FaTimes, FaBell } from 'react-icons/fa';
-import { API_BASE_URL } from '../config';
+import { useNotification } from '../context/NotificationContext';
 
 export default function Sidebar({ isOpen, onClose }) {
     const navigate = useNavigate();
-    const [unreadCount, setUnreadCount] = useState(0);
+    const { unreadCount } = useNotification();
+
+    // Remove local fetch logic since context handles it
 
     const handleLogout = () => {
         localStorage.removeItem('user');
@@ -13,28 +15,7 @@ export default function Sidebar({ isOpen, onClose }) {
     };
 
     const user = JSON.parse(localStorage.getItem('user')) || {};
-
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            if (!user._id) return;
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/notifications/${user._id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    const unread = data.filter(n => !n.is_read).length;
-                    setUnreadCount(unread);
-                }
-            } catch (err) {
-                console.error("Error fetching notifications:", err);
-            }
-        };
-
-        if (isOpen) { // Fetch when sidebar opens
-            fetchNotifications();
-        }
-        // Also fetch on mount/interval? For now sidebar open is good trigger
-        fetchNotifications();
-    }, [user._id, isOpen]);
+    // ... rest of component
 
     const menuItems = [
         { icon: <FaUser />, label: 'User Profile', path: '/profile' },

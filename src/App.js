@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { NotificationProvider } from "./context/NotificationContext";
 
 // Public Pages
 import Login from "./pages/Login";
@@ -97,10 +98,14 @@ function AppContent() {
   );
 }
 
+
+
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <NotificationProvider>
+        <AppContent />
+      </NotificationProvider>
     </AuthProvider>
   );
 }

@@ -797,6 +797,41 @@ router.put('/campaigns/:id/donations/:donationId/verify', async (req, res) => {
     }
 });
 
+// Reject a donation
+router.put('/campaigns/:id/donations/:donationId/reject', async (req, res) => {
+    try {
+        const campaign = await Campaign.findById(req.params.id);
+        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+
+        const donation = campaign.donations.id(req.params.donationId);
+        if (!donation) return res.status(404).json({ message: 'Donation not found' });
+
+        if (donation.status === 'verified') {
+            if (donation.amount) {
+                campaign.raised = Math.max(0, (campaign.raised || 0) - Number(donation.amount));
+            }
+        }
+
+        donation.status = 'rejected';
+
+        await campaign.save();
+
+        // Notify Donor
+        const notification = new Notification({
+            recipient_id: donation.user_id,
+            sender_id: campaign.user_id,
+            type: 'campaign_donation',
+            message: `rejected your donation to ${campaign.name}. Please contact the owner for details.`,
+            related_id: campaign._id
+        });
+        await notification.save();
+
+        res.json(campaign);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // --- NOTIFICATIONS ---
 
 // Get notifications for a user

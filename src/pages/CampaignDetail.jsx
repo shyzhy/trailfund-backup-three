@@ -308,7 +308,10 @@ export default function CampaignDetail() {
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 'bold' }}>{donation.user_id?.name || 'Anonymous'}</div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-                        {new Date(donation.date).toLocaleDateString()} • <span style={{ color: donation.status === 'verified' ? '#28a745' : '#ffc107', textTransform: 'capitalize' }}>{donation.status || 'Pending'}</span>
+                        {new Date(donation.date).toLocaleDateString()} • <span style={{
+                          color: donation.status === 'verified' ? '#28a745' : (donation.status === 'rejected' ? '#FF6B6B' : '#ffc107'),
+                          textTransform: 'capitalize'
+                        }}>{donation.status || 'Pending'}</span>
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
@@ -326,38 +329,71 @@ export default function CampaignDetail() {
                           View Receipt
                         </button>
                       )}
-                      {donation.status !== 'verified' && (
-                        <button
-                          onClick={() => {
-                            setModal({
-                              isOpen: true,
-                              type: 'success', // Green standard
-                              message: "Approve this donation? This will add the amount to your raised total.",
-                              onConfirm: async () => {
-                                try {
-                                  await fetch(`${API_BASE_URL}/api/campaigns/${id}/donations/${donation._id}/verify`, {
-                                    method: 'PUT'
-                                  });
-                                  setModal({ isOpen: true, type: 'success', message: 'Donation Approved!', onConfirm: null });
-                                  // Reload will happen when this success modal is closed
-                                } catch (err) {
-                                  setModal({ isOpen: true, type: 'error', message: "Error verifying donation", onConfirm: null });
+                      {(!donation.status || donation.status === 'pending') && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setModal({
+                                isOpen: true,
+                                type: 'success', // Green standard
+                                message: "Approve this donation? This will add the amount to your raised total.",
+                                onConfirm: async () => {
+                                  try {
+                                    await fetch(`${API_BASE_URL}/api/campaigns/${id}/donations/${donation._id}/verify`, {
+                                      method: 'PUT'
+                                    });
+                                    setModal({ isOpen: true, type: 'success', message: 'Donation Approved!', onConfirm: null });
+                                    // Reload will happen when this success modal is closed
+                                  } catch (err) {
+                                    setModal({ isOpen: true, type: 'error', message: "Error verifying donation", onConfirm: null });
+                                  }
                                 }
-                              }
-                            });
-                          }}
-                          style={{
-                            background: 'var(--accent-color)',
-                            color: 'white',
-                            border: 'none',
-                            padding: '4px 10px',
-                            borderRadius: 4,
-                            cursor: 'pointer',
-                            fontSize: 11
-                          }}
-                        >
-                          Approve
-                        </button>
+                              });
+                            }}
+                            style={{
+                              background: 'var(--accent-color)',
+                              color: 'white',
+                              border: 'none',
+                              padding: '4px 10px',
+                              borderRadius: 4,
+                              cursor: 'pointer',
+                              fontSize: 11
+                            }}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => {
+                              setModal({
+                                isOpen: true,
+                                type: 'warning', // Warning color for rejection
+                                message: "Reject this donation? This will mark it as rejected.",
+                                onConfirm: async () => {
+                                  try {
+                                    await fetch(`${API_BASE_URL}/api/campaigns/${id}/donations/${donation._id}/reject`, {
+                                      method: 'PUT'
+                                    });
+                                    setModal({ isOpen: true, type: 'success', message: 'Donation Rejected.', onConfirm: null });
+                                  } catch (err) {
+                                    setModal({ isOpen: true, type: 'error', message: "Error rejecting donation", onConfirm: null });
+                                  }
+                                }
+                              });
+                            }}
+                            style={{
+                              background: 'transparent',
+                              color: '#FF6B6B',
+                              border: '1px solid #FF6B6B',
+                              padding: '4px 10px',
+                              borderRadius: 4,
+                              cursor: 'pointer',
+                              fontSize: 11,
+                              marginLeft: 5
+                            }}
+                          >
+                            Reject
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>

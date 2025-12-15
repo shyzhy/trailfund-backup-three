@@ -334,7 +334,8 @@ router.get('/campaigns', async (req, res) => {
     try {
         const campaigns = await Campaign.find({ status: 'approved' })
             .sort({ createdAt: -1 })
-            .populate('approved_by_id', 'name profile_picture'); // Populate admin photo
+            .populate('approved_by_id', 'name profile_picture')
+            .populate('user_id', 'name username profile_picture');
 
         // Also populate user_id but maybe that's done client side or not needed?
         // Wait, original code didn't show population for user_id. Let's check context.
@@ -351,7 +352,8 @@ router.get('/campaigns', async (req, res) => {
 router.get('/campaigns/:id', async (req, res) => {
     try {
         const campaign = await Campaign.findById(req.params.id)
-            .populate('approved_by_id', 'name profile_picture');
+            .populate('approved_by_id', 'name profile_picture')
+            .populate('user_id', 'name username profile_picture');
         if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
         res.json(campaign);
     } catch (err) {
@@ -649,6 +651,42 @@ router.put('/requests/:id', async (req, res) => {
     }
 });
 
+// Get approved campaigns (Admin)
+router.get('/campaigns/admin/approved', async (req, res) => {
+    try {
+        const campaigns = await Campaign.find({ status: 'approved' })
+            .populate('user_id', 'name username')
+            .populate('approved_by_id', 'name profile_picture')
+            .sort({ date_approved: -1 });
+        res.json(campaigns);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Delete Campaign with Note (Admin)
+router.post('/campaigns/:id/delete-with-note', async (req, res) => {
+    const { user_id, reason } = req.body;
+    try {
+        const campaign = await Campaign.findById(req.params.id);
+        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+
+        const notification = new Notification({
+            recipient_id: campaign.user_id,
+            sender_id: user_id,
+            type: 'campaign_rejected', // Using rejected type for red alert
+            message: `Your campaign "${campaign.name}" has been removed by admin. Reason: ${reason}`,
+            related_id: null
+        });
+        await notification.save();
+
+        await Campaign.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Campaign deleted' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Approve a campaign
 router.post('/campaigns/:id/approve', async (req, res) => {
     const { user_id } = req.body; // Faculty ID
@@ -660,8 +698,8 @@ router.post('/campaigns/:id/approve', async (req, res) => {
         if (!faculty) return res.status(404).json({ message: 'Faculty not found' });
 
         campaign.status = 'approved';
-        campaign.approved_by = faculty.name; // Store name for display (legacy/fallback)
-        campaign.approved_by_id = user_id; // Store ID for picture lookup
+        campaign.approved_by = user_id; // Set to ID as per schema
+        campaign.approved_by_id = user_id; // Redundant but consistent with schema
         campaign.date_approved = Date.now();
 
         // Create Notification

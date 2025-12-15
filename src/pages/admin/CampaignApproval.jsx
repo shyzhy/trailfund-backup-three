@@ -1,18 +1,27 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
 import { FaCheck, FaTimes, FaEdit, FaEye } from 'react-icons/fa';
 
 export default function CampaignApproval() {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const [campaigns, setCampaigns] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [actionModal, setActionModal] = useState(null); // { type: 'reject'|'revise', campaignId: string }
+    const [submitting, setSubmitting] = useState(false);
+    const [activeTab, setActiveTab] = useState('pending'); // 'pending' or 'approved'
+    const [actionModal, setActionModal] = useState(null); // { type: 'reject'|'revise'|'delete', campaignId: string }
     const [feedback, setFeedback] = useState('');
 
     const fetchCampaigns = async () => {
+        setLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/api/campaigns/admin/pending`);
+            const endpoint = activeTab === 'pending'
+                ? `${API_BASE_URL}/api/campaigns/admin/pending`
+                : `${API_BASE_URL}/api/campaigns/admin/approved`;
+
+            const response = await fetch(endpoint);
             if (response.ok) {
                 const data = await response.json();
                 setCampaigns(data);
@@ -26,50 +35,92 @@ export default function CampaignApproval() {
 
     useEffect(() => {
         fetchCampaigns();
-    }, []);
+    }, [activeTab]);
 
-    const handleApprove = async (id) => {
-        if (!window.confirm('Are you sure you want to approve this campaign?')) return;
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/campaigns/${id}/approve`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: user._id })
-            });
-            if (res.ok) fetchCampaigns();
-        } catch (err) {
-            console.error(err);
-        }
+    const handleApprove = (id) => {
+        setActionModal({ type: 'approve', campaignId: id });
     };
 
     const handleActionSubmit = async () => {
-        if (!feedback) return alert('Please provide a reason/feedback');
         const { type, campaignId } = actionModal;
-        const endpoint = type === 'reject' ? 'reject' : 'revise';
+        if (type !== 'approve' && !feedback) return alert('Please provide a reason/feedback');
 
+        // Map action type to endpoint suffix
+        let endpointSuffix = '';
+        if (type === 'reject') endpointSuffix = 'reject';
+        else if (type === 'revise') endpointSuffix = 'revise';
+        else if (type === 'delete') endpointSuffix = 'delete-with-note';
+        else if (type === 'approve') endpointSuffix = 'approve';
+
+        setSubmitting(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/campaigns/${campaignId}/${endpoint}`, {
+            const body = { user_id: user?._id };
+            if (type !== 'approve') {
+                body[type === 'delete' || type === 'reject' ? 'reason' : 'feedback'] = feedback;
+            }
+
+            const res = await fetch(`${API_BASE_URL}/api/campaigns/${campaignId}/${endpointSuffix}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: user._id,
-                    [type === 'reject' ? 'reason' : 'feedback']: feedback
-                })
+                body: JSON.stringify(body)
             });
+
             if (res.ok) {
                 setActionModal(null);
                 setFeedback('');
                 fetchCampaigns();
+            } else {
+                const data = await res.json();
+                alert(data.message || 'Action failed. Please check console.');
             }
         } catch (err) {
             console.error(err);
+            alert('Something went wrong. Please check your connection.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
     return (
         <div>
-            <h1 style={{ color: 'white' }}>Campaign Approval</h1>
-            <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: 20 }}>Manage pending fundraising campaigns.</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <div>
+                    <h1 style={{ color: 'white', margin: 0 }}>Campaign Management</h1>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', margin: '5px 0 0 0' }}>Review pending or manage approved campaigns.</p>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+                <button
+                    onClick={() => setActiveTab('pending')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeTab === 'pending' ? '#FFD700' : 'rgba(255,255,255,0.1)',
+                        color: activeTab === 'pending' ? '#002840' : 'white',
+                        border: 'none',
+                        borderRadius: 20,
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Pending Approval
+                </button>
+                <button
+                    onClick={() => setActiveTab('approved')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeTab === 'approved' ? '#4CAF50' : 'rgba(255,255,255,0.1)',
+                        color: activeTab === 'approved' ? 'white' : 'white',
+                        border: 'none',
+                        borderRadius: 20,
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Approved Campaigns
+                </button>
+            </div>
 
             {loading ? (
                 <div style={{ color: 'white' }}>Loading...</div>
@@ -109,22 +160,29 @@ export default function CampaignApproval() {
                                 </p>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10 }}>
-                                <button onClick={() => window.open(`/campaigns/${campaign._id}`, '_blank')}
+
+                                <button onClick={() => navigate(`/admin/campaigns/${campaign._id}`)}
                                     className="btn" style={{ padding: '8px 16px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
                                     <FaEye /> View
                                 </button>
-                                <button onClick={() => handleApprove(campaign._id)}
-                                    className="btn" style={{ padding: '8px 16px', borderRadius: 12, border: 'none', background: '#4CAF50', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <FaCheck /> Approve
-                                </button>
-                                <button onClick={() => setActionModal({ type: 'revise', campaignId: campaign._id })}
-                                    className="btn" style={{ padding: '8px 16px', borderRadius: 12, border: 'none', background: '#FF9800', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <FaEdit /> Revise
-                                </button>
-                                <button onClick={() => setActionModal({ type: 'reject', campaignId: campaign._id })}
-                                    className="btn" style={{ padding: '8px 16px', borderRadius: 12, border: 'none', background: '#FF6B6B', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <FaTimes /> Reject
-                                </button>
+
+                                {activeTab === 'pending' ? (
+                                    <>
+                                        <button onClick={() => handleApprove(campaign._id)}
+                                            className="btn" style={{ padding: '8px 16px', borderRadius: 12, border: 'none', background: '#4CAF50', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <FaCheck /> Approve
+                                        </button>
+                                        <button onClick={() => setActionModal({ type: 'reject', campaignId: campaign._id })}
+                                            className="btn" style={{ padding: '8px 16px', borderRadius: 12, border: 'none', background: '#FF6B6B', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <FaTimes /> Reject
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button onClick={() => setActionModal({ type: 'delete', campaignId: campaign._id })}
+                                        className="btn" style={{ padding: '8px 16px', borderRadius: 12, border: 'none', background: '#D32F2F', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <FaTimes /> Delete
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -141,28 +199,54 @@ export default function CampaignApproval() {
                     <div className="glass-card" style={{
                         background: '#002840', padding: 30, borderRadius: 20, width: 400, border: '1px solid rgba(255,255,255,0.1)'
                     }}>
-                        <h3 style={{ color: 'white' }}>{actionModal.type === 'reject' ? 'Reject Campaign' : 'Request Revision'}</h3>
+                        <h3 style={{ color: 'white' }}>
+                            {actionModal.type === 'approve' ? 'Approve Campaign' :
+                                actionModal.type === 'reject' ? 'Reject Campaign' :
+                                    actionModal.type === 'revise' ? 'Request Revision' :
+                                        'Delete Campaign'}
+                        </h3>
                         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>
-                            Please provide {actionModal.type === 'reject' ? 'rejection reason' : 'revision feedback'} for the user.
+                            {actionModal.type === 'approve'
+                                ? 'Are you sure you want to approve this campaign? This will make it visible to all users.'
+                                : `Please provide ${actionModal.type === 'reject' ? 'rejection reason' :
+                                    actionModal.type === 'revise' ? 'revision feedback' :
+                                        'reason for deletion'} for the user.`}
                         </p>
-                        <textarea
-                            value={feedback}
-                            onChange={(e) => setFeedback(e.target.value)}
-                            style={{
-                                width: '100%', height: 100, padding: 10, borderRadius: 12,
-                                border: '1px solid rgba(255,255,255,0.2)', margin: '10px 0',
-                                background: 'rgba(255,255,255,0.05)', color: 'white'
-                            }}
-                            placeholder="Enter notes here..."
-                        />
+                        {actionModal.type !== 'approve' && (
+                            <textarea
+                                value={feedback}
+                                onChange={(e) => setFeedback(e.target.value)}
+                                style={{
+                                    width: '100%', height: 100, padding: 10, borderRadius: 12,
+                                    border: '1px solid rgba(255,255,255,0.2)', margin: '10px 0',
+                                    background: 'rgba(255,255,255,0.05)', color: 'white'
+                                }}
+                                placeholder="Enter notes here..."
+                            />
+                        )}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
                             <button onClick={() => { setActionModal(null); setFeedback(''); }}
-                                style={{ padding: '8px 16px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
+                                disabled={submitting}
+                                style={{ padding: '8px 16px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', opacity: submitting ? 0.5 : 1 }}>
                                 Cancel
                             </button>
                             <button onClick={handleActionSubmit}
-                                style={{ padding: '8px 16px', background: '#FFD700', color: '#002840', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>
-                                Submit
+                                disabled={submitting}
+                                style={{
+                                    padding: '8px 16px',
+                                    background: actionModal.type === 'approve' ? '#4CAF50' :
+                                        actionModal.type === 'delete' || actionModal.type === 'reject' ? '#D32F2F' : '#FFD700',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: 8,
+                                    cursor: submitting ? 'not-allowed' : 'pointer',
+                                    fontWeight: 'bold',
+                                    opacity: submitting ? 0.7 : 1
+                                }}>
+                                {submitting ? 'Processing...' : (
+                                    actionModal.type === 'approve' ? 'Approve' :
+                                        actionModal.type === 'delete' ? 'Delete' :
+                                            actionModal.type === 'reject' ? 'Reject' : 'Submit')}
                             </button>
                         </div>
                     </div>

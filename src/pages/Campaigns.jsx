@@ -66,8 +66,8 @@ export default function Campaigns() {
 
   const filteredCampaigns = campaigns.filter(c => {
     // 1. Search Filter
-    const title = c.title || c.name || '';
-    const summary = c.summary || c.description || '';
+    const title = c.name || '';
+    const summary = c.description || '';
     const matchesSearch = title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       summary.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -341,7 +341,7 @@ export default function Campaigns() {
                   )}
                   ✓ Approved {c.approved_by_id?.name ? `by ${c.approved_by_id.name}` : (c.approved_by ? `by ${c.approved_by}` : '')}
                 </div>
-                )}
+
 
                 <div style={{
                   position: 'absolute',
@@ -361,16 +361,16 @@ export default function Campaigns() {
               <div style={{ padding: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                   <img
-                    src={c.avatar || "/assets/pfp1.jpg"}
+                    src={c.user_id?.profile_picture || "/assets/pfp1.jpg"}
                     alt="Owner"
                     style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.5)' }}
                   />
                   <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
-                    by <span style={{ fontWeight: 'bold', color: 'white' }}>{c.id === 'c1' ? 'Ning Yizhuo' : 'Yu Jimin'}</span>
+                    by <span style={{ fontWeight: 'bold', color: 'white' }}>{c.user_id?.name || 'Unknown User'}</span>
                   </div>
                 </div>
 
-                <h3 style={{ margin: '0 0 8px 0', fontSize: 18, fontWeight: 'bold' }}>{c.title || c.name}</h3>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: 18, fontWeight: 'bold' }}>{c.name}</h3>
                 <p style={{
                   margin: '0 0 16px 0',
                   fontSize: 14,
@@ -382,7 +382,7 @@ export default function Campaigns() {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis'
                 }}>
-                  {c.summary || c.description}
+                  {c.description}
                 </p>
 
                 <div style={{ marginBottom: 16 }}>

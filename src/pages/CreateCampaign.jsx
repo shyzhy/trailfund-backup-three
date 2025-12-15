@@ -11,7 +11,6 @@ export default function CreateCampaign() {
 
   const [formData, setFormData] = useState({
     title: '',
-    ownerName: '',
     organization: '',
     description: '',
     targetAmount: '',
@@ -36,7 +35,6 @@ export default function CreateCampaign() {
         .then(data => {
           setFormData({
             title: data.name,
-            ownerName: '', // User is handled by backend/localStorage, but we can't easily set it here without knowing logic
             organization: data.organization || '',
             description: data.description,
             targetAmount: data.target_amount,
@@ -261,35 +259,19 @@ export default function CreateCampaign() {
           </div>
         </div>
 
-        {/* Owner & Organization */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>Owner Name</label>
-            <div style={{ position: 'relative' }}>
-              <FaUser style={{ position: 'absolute', left: 15, top: 14, color: 'rgba(255,255,255,0.6)', fontSize: 12 }} />
-              <input
-                name="ownerName"
-                value={formData.ownerName}
-                onChange={handleChange}
-                type="text"
-                placeholder="Full Name"
-                style={{ width: '100%', padding: '12px 12px 12px 35px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white', outline: 'none' }}
-              />
-            </div>
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', marginBottom: 8, fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>Organization</label>
-            <div style={{ position: 'relative' }}>
-              <FaBuilding style={{ position: 'absolute', left: 15, top: 14, color: 'rgba(255,255,255,0.6)', fontSize: 12 }} />
-              <input
-                name="organization"
-                value={formData.organization}
-                onChange={handleChange}
-                type="text"
-                placeholder="Org/Team"
-                style={{ width: '100%', padding: '12px 12px 12px 35px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white', outline: 'none' }}
-              />
-            </div>
+        {/* Organization */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>Organization</label>
+          <div style={{ position: 'relative' }}>
+            <FaBuilding style={{ position: 'absolute', left: 15, top: 14, color: 'rgba(255,255,255,0.6)', fontSize: 12 }} />
+            <input
+              name="organization"
+              value={formData.organization}
+              onChange={handleChange}
+              type="text"
+              placeholder="Org/Team"
+              style={{ width: '100%', padding: '12px 12px 12px 35px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white', outline: 'none' }}
+            />
           </div>
         </div>
 

@@ -27,6 +27,7 @@ import BottomNav from "./components/BottomNav";
 // Admin Pages
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminCampaignView from "./pages/admin/AdminCampaignView"; // Import
 import CampaignApproval from "./pages/admin/CampaignApproval";
 import UserManagement from "./pages/admin/UserManagement";
 import ReportsManagement from "./pages/admin/ReportsManagement";
@@ -79,6 +80,7 @@ function AppContent() {
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="campaigns" element={<CampaignApproval />} />
+              <Route path="campaigns/:id" element={<AdminCampaignView />} /> {/* New Route */}
               <Route path="users" element={<UserManagement />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="reports" element={<ReportsManagement />} />

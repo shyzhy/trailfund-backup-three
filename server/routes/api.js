@@ -353,7 +353,8 @@ router.get('/campaigns/:id', async (req, res) => {
     try {
         const campaign = await Campaign.findById(req.params.id)
             .populate('approved_by_id', 'name profile_picture')
-            .populate('user_id', 'name username profile_picture');
+            .populate('user_id', 'name username profile_picture')
+            .populate('donations.user_id', 'name profile_picture');
         if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
         res.json(campaign);
     } catch (err) {
@@ -719,6 +720,82 @@ router.post('/campaigns/:id/approve', async (req, res) => {
     }
 });
 
+
+// Donate to a campaign with receipt
+router.post('/campaigns/:id/donate', async (req, res) => {
+    const { user_id, amount, item_type, receipt } = req.body;
+    try {
+        const campaign = await Campaign.findById(req.params.id);
+        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+
+        const donation = {
+            user_id: user_id,
+            amount: amount,
+            item_type: item_type,
+            receipt: receipt, // Base64 string
+            status: 'pending', // Pending verification
+            date: Date.now()
+        };
+
+        campaign.donations.push(donation);
+
+        // Note: keeping raised as is until verified
+
+        await campaign.save();
+
+        // Notify Owner
+        const notification = new Notification({
+            recipient_id: campaign.user_id,
+            sender_id: user_id,
+            type: 'campaign_donation',
+            message: `submitted a donation for verification: ${amount ? '₱' + Number(amount).toLocaleString() : 'items'}.`,
+            related_id: campaign._id
+        });
+        await notification.save();
+
+        res.json(campaign);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Verify a donation
+router.put('/campaigns/:id/donations/:donationId/verify', async (req, res) => {
+    try {
+        const campaign = await Campaign.findById(req.params.id);
+        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+
+        const donation = campaign.donations.id(req.params.donationId);
+        if (!donation) return res.status(404).json({ message: 'Donation not found' });
+
+        if (donation.status === 'verified') {
+            return res.status(400).json({ message: 'Donation already verified' });
+        }
+
+        donation.status = 'verified';
+
+        // Update raised amount if it's monetary
+        if (donation.amount) {
+            campaign.raised = (campaign.raised || 0) + Number(donation.amount);
+        }
+
+        await campaign.save();
+
+        // Notify Donor
+        const notification = new Notification({
+            recipient_id: donation.user_id,
+            sender_id: campaign.user_id,
+            type: 'campaign_donation',
+            message: `verified your donation of ${donation.amount ? '₱' + Number(donation.amount).toLocaleString() : 'items'} to ${campaign.name}.`,
+            related_id: campaign._id
+        });
+        await notification.save();
+
+        res.json(campaign);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
 
 // --- NOTIFICATIONS ---
 

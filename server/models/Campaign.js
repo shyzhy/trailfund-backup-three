@@ -21,7 +21,17 @@ const CampaignSchema = new mongoose.Schema({
     date_created: { type: Date, default: Date.now },
     date_approved: Date,
     end_date: Date, // Added for deadline
-    image: String // Kept for UI compatibility
+    image: String, // Kept for UI compatibility
+    raised: { type: Number, default: 0 }, // Verified field
+    donations: [{
+        user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        amount: Number,
+        item_type: String, // For item donations
+        date: { type: Date, default: Date.now },
+        receipt: String, // Base64 receipt image
+        status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' } // Approval status
+    }]
+
 });
 
 module.exports = mongoose.model('Campaign', CampaignSchema);

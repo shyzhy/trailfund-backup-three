@@ -64,7 +64,7 @@ export default function Notifications() {
         // Navigate based on type
         if (notification.type === 'friend_request' && notification.sender_id) {
             navigate(`/profile/${notification.sender_id._id}`);
-        } else if (['campaign_rejected', 'campaign_approved', 'campaign_revision'].includes(notification.type) && notification.related_id) {
+        } else if (['campaign_rejected', 'campaign_approved', 'campaign_revision', 'campaign_donation'].includes(notification.type) && notification.related_id) {
             navigate(`/campaigns/${notification.related_id}`);
         } else if (notification.type === 'request_fulfillment' && notification.related_id) {
             navigate(`/requests/${notification.related_id}`);
@@ -76,7 +76,7 @@ export default function Notifications() {
 
         return notifications.filter(n => {
             if (filter === 'campaigns') {
-                return ['campaign_approved', 'campaign_rejected', 'campaign_revision'].includes(n.type);
+                return ['campaign_approved', 'campaign_rejected', 'campaign_revision', 'campaign_donation'].includes(n.type);
             }
             if (filter === 'requests') {
                 return ['request_fulfillment'].includes(n.type); // Add other request types if any

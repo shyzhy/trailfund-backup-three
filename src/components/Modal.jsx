@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaCheckCircle, FaExclamationCircle, FaTimesCircle, FaSpinner } from 'react-icons/fa';
 
-const Modal = ({ isOpen, type, message, onClose }) => {
+const Modal = ({ isOpen, type, message, onClose, onConfirm }) => {
     if (!isOpen) return null;
 
     let icon;
@@ -72,18 +72,52 @@ const Modal = ({ isOpen, type, message, onClose }) => {
                 </p>
 
                 {type !== 'pending' && (
-                    <button
-                        onClick={onClose}
-                        className="btn"
-                        style={{
-                            background: color,
-                            color: type === 'warning' ? '#333' : 'white',
-                            width: '100%',
-                            marginTop: 10
-                        }}
-                    >
-                        Okay
-                    </button>
+                    <div style={{ display: 'flex', gap: 10, width: '100%', marginTop: 10 }}>
+                        {onConfirm ? (
+                            <>
+                                <button
+                                    onClick={onConfirm}
+                                    className="btn"
+                                    style={{
+                                        flex: 1,
+                                        background: color, // Use the type color (green for success/verify)
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: 10,
+                                        borderRadius: 8
+                                    }}
+                                >
+                                    Proceed
+                                </button>
+                                <button
+                                    onClick={onClose}
+                                    className="btn"
+                                    style={{
+                                        flex: 1,
+                                        background: 'transparent',
+                                        color: 'rgba(255,255,255,0.7)',
+                                        border: '1px solid rgba(255,255,255,0.3)',
+                                        padding: 10,
+                                        borderRadius: 8
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={onClose}
+                                className="btn"
+                                style={{
+                                    background: color,
+                                    color: type === 'warning' ? '#333' : 'white',
+                                    width: '100%'
+                                }}
+                            >
+                                Okay
+                            </button>
+                        )}
+                    </div>
                 )}
             </div>
             <style>{`

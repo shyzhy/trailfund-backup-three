@@ -6,6 +6,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 
 // Public Pages
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import Signup from "./pages/Signup";
 import UploadPhoto from "./pages/UploadPhoto";
 import Home from "./pages/Home";
@@ -54,6 +55,7 @@ function AppContent() {
           {/* Public / Student Routes */}
           <Route path="/" element={<Splash />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/upload-photo" element={<UploadPhoto />} />
 

@@ -7,13 +7,15 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/trailf
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(async () => {
         console.log('Connected to DB');
-        const user = await User.findOne({ username: 'giselle_rocks' });
+        console.log('Connected to DB Name:', mongoose.connection.name);
+        const collections = await mongoose.connection.db.listCollections().toArray();
+        console.log('Collections:', collections.map(c => c.name));
+
+        const user = await User.findOne({ username: 'shurinyaah' });
         if (user) {
             console.log('User found:', user.username);
-            console.log('Name:', user.name);
-            console.log('Full Object:', JSON.stringify(user.toObject(), null, 2));
         } else {
-            console.log('User giselle_rocks NOT found');
+            console.log('User shurinyaah NOT found');
         }
         mongoose.connection.close();
     })

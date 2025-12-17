@@ -115,7 +115,42 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-// Update Profile Photo
+// Verify User for Password Reset
+router.post('/users/verify-reset', async (req, res) => {
+    const { username, email } = req.body;
+    try {
+        // Case insensitive email search
+        const user = await User.findOne({
+            username: username,
+            email: { $regex: new RegExp(`^${email}$`, 'i') }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'No account found with these details.' });
+        }
+
+        res.json({ message: 'User verified', user_id: user._id });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Reset Password
+router.post('/users/reset-password', async (req, res) => {
+    const { user_id, newPassword } = req.body;
+    try {
+        const user = await User.findById(user_id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.password = newPassword; // In a real app, hash this!
+        await user.save();
+
+        res.json({ message: 'Password reset successfully' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 router.post('/users/:id/photo', async (req, res) => {
     try {
         const { profile_picture } = req.body;

@@ -12,7 +12,6 @@ const UserSchema = new mongoose.Schema({
     year_level: String, // Mapped from yearLevel
     bio: String,
     profile_picture: String, // Mapped from avatar
-    ustep_linked: { type: Boolean, default: false },
     status: { type: String, enum: ['active', 'restricted', 'banned'], default: 'active' },
     date_created: { type: Date, default: Date.now }, // Mapped from createdAt
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

@@ -53,9 +53,12 @@ router.post('/login', async (req, res) => {
     const { identifier, password } = req.body;
 
     try {
-        // Find user by username OR email
+        // Find user by username OR email (case-insensitive for email)
         const user = await User.findOne({
-            $or: [{ username: identifier }, { email: identifier }]
+            $or: [
+                { username: identifier },
+                { email: { $regex: new RegExp(`^${identifier}$`, 'i') } }
+            ]
         });
 
         if (!user) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaUsers, FaUserFriends, FaHandHoldingHeart, FaBoxOpen, FaCog, FaSignOutAlt, FaTimes, FaBell } from 'react-icons/fa';
+import { FaUser, FaUsers, FaUserFriends, FaHandHoldingHeart, FaBoxOpen, FaCog, FaSignOutAlt, FaTimes, FaBell, FaCompass } from 'react-icons/fa';
 import { useNotification } from '../context/NotificationContext';
 
 export default function Sidebar({ isOpen, onClose }) {
@@ -39,7 +39,7 @@ export default function Sidebar({ isOpen, onClose }) {
         // I will just link to `#` for now but show the Badge as requested.
         { icon: <FaUsers />, label: 'Community', path: '/community' },
         { icon: <FaUserFriends />, label: 'Friends List', path: '/friends' },
-        { icon: <FaHandHoldingHeart />, label: 'Campaigns', path: '/campaigns' },
+        { icon: <FaCompass />, label: 'Explore', path: '/explore' },
         { icon: <FaBoxOpen />, label: 'Requests', path: '/requests' },
         { icon: <FaCog />, label: 'Settings', path: '/settings' },
     ];

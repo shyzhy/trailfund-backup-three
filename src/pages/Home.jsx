@@ -367,7 +367,7 @@ export default function Home() {
       {/* Top Requests */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h2 style={{ fontSize: 20, fontWeight: 'bold', margin: 0, color: 'white' }}>Top Campaigns</h2>
-        <Link to="/campaigns?tab=requests" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14 }}>
+        <Link to="/explore?tab=campaigns" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14 }}>
           See All <span>→</span>
         </Link>
       </div>
@@ -432,7 +432,7 @@ export default function Home() {
       {/* Real Top Requests Section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, marginTop: 10 }}>
         <h2 style={{ fontSize: 20, fontWeight: 'bold', margin: 0, color: 'white' }}>Top Requests</h2>
-        <Link to="/requests" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14 }}>
+        <Link to="/explore?tab=requests" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14 }}>
           See All <span>→</span>
         </Link>
       </div>

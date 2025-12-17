@@ -86,17 +86,17 @@ export default function BottomNav() {
                 </motion.div>
             </Link>
 
-            <Link to="/campaigns" style={{ color: isActive('/campaigns') ? '#fff' : 'rgba(255,255,255,0.5)' }}>
+            <Link to="/explore" style={{ color: isActive('/explore') ? '#fff' : 'rgba(255,255,255,0.5)' }}>
                 <motion.div
                     variants={navItemVariants}
                     whileTap="tap"
                     whileHover="hover"
                     style={{
                         padding: 12,
-                        background: isActive('/campaigns') ? 'rgba(255,255,255,0.2)' : 'transparent',
+                        background: isActive('/explore') ? 'rgba(255,255,255,0.2)' : 'transparent',
                         borderRadius: '50%',
                         transition: 'background 0.3s ease',
-                        boxShadow: isActive('/campaigns') ? '0 0 15px rgba(255,255,255,0.3)' : 'none'
+                        boxShadow: isActive('/explore') ? '0 0 15px rgba(255,255,255,0.3)' : 'none'
                     }}
                 >
                     <FaCompass size={24} />

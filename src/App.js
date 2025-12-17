@@ -9,7 +9,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import UploadPhoto from "./pages/UploadPhoto";
 import Home from "./pages/Home";
-import Campaigns from "./pages/Campaigns";
+import Explore from "./pages/Explore";
 import CampaignDetail from "./pages/CampaignDetail";
 import CreateCampaign from "./pages/CreateCampaign";
 import CreateSelection from "./pages/CreateSelection";
@@ -59,7 +59,8 @@ function AppContent() {
 
           {/* Protected Student Routes (technically should wrap in ProtectedRoute too, but allowedRoles=all or student) */}
           <Route path="/home" element={<Home />} />
-          <Route path="/campaigns" element={<Campaigns />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/campaigns" element={<Explore />} /> {/* Keep legacy for now or remove? User wants replacement. Let's redirect or just use component */}
           <Route path="/campaigns/:id" element={<CampaignDetail />} />
           <Route path="/create" element={<CreateSelection />} />
           <Route path="/create/campaign" element={<CreateCampaign />} />
@@ -72,7 +73,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile/:id" element={<UserProfile />} />
           <Route path="/friends" element={<FriendsList />} />
-          <Route path="/explore" element={<Campaigns />} />
+
           <Route path="/notifications" element={<Notifications />} />
 
           {/* Admin Routes */}

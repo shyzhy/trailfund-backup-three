@@ -57,26 +57,27 @@ export default function Login() {
             justifyContent: 'center',
             alignItems: 'center',
             padding: 20,
-            background: 'var(--primary-bg)',
+            padding: 20,
             color: 'white',
             position: 'relative',
             overflow: 'hidden'
         }}>
             {/* Background Image with Mask Fade */}
+            {/* Background Image with Mask Fade */}
             <div style={{
-                position: 'absolute',
+                position: 'fixed',
                 top: 0,
                 left: 0,
                 right: 0,
-                bottom: 0,
+                height: '60vh',
                 backgroundImage: 'url(/assets/university.jpg)',
                 backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                backgroundPosition: 'top center',
                 backgroundRepeat: 'no-repeat',
                 zIndex: 0,
                 opacity: 0.3,
-                maskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)',
-                WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 100%)'
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 30%, black 70%, transparent 100%)'
             }} />
 
             <div style={{ position: 'relative', zIndex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

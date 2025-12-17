@@ -4,7 +4,7 @@ import { FaArrowLeft, FaSearch, FaFilter } from "react-icons/fa";
 import BottomNav from "../components/BottomNav";
 import { API_BASE_URL } from '../config';
 
-export default function Campaigns() {
+export default function Explore() {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);

@@ -140,27 +140,7 @@ export default function CampaignDetail() {
         </div>
       )}
 
-      {/* Approved Alert */}
-      {campaign.status === 'approved' && (
-        <div style={{ background: 'rgba(40, 167, 69, 0.2)', border: '1px solid #28a745', padding: 15, borderRadius: 12, marginBottom: 20, display: 'flex', gap: 15, alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
-            {campaign.approved_by_id?.profile_picture ? (
-              <div style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', border: '2px solid #28a745' }}>
-                <img src={campaign.approved_by_id.profile_picture} alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-            ) : (
-              <div style={{ color: '#28a745', fontSize: 24 }}>✓</div>
-            )}
-          </div>
-          <div>
-            <strong style={{ color: '#28a745', fontSize: 16 }}>Campaign Approved</strong>
-            <p style={{ margin: '4px 0 0 0', fontSize: 14, color: 'rgba(255,255,255,0.9)' }}>
-              This campaign has been verified and approved{campaign.approved_by_id?.name ? ` by ${campaign.approved_by_id.name}` : (campaign.approved_by ? ` by ${campaign.approved_by}` : '')}.
-            </p>
-            <div style={{ fontSize: 12, color: '#28a745', marginTop: 4, opacity: 0.8 }}>Authorized Administrator</div>
-          </div>
-        </div>
-      )}
+
 
       {(campaign.admin_feedback && campaign.status === 'pending') && (
         <div style={{ background: 'rgba(255, 193, 7, 0.2)', border: '1px solid #FFC107', padding: 15, borderRadius: 12, marginBottom: 20, display: 'flex', gap: 10, alignItems: 'start' }}>
@@ -209,6 +189,27 @@ export default function CampaignDetail() {
 
         <div style={{ paddingTop: 25 }}>
 
+          {/* Owner Info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 25 }}>
+            <img
+              src={campaign.user_id?.profile_picture || "https://i.pravatar.cc/150?img=10"}
+              alt="Owner"
+              style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.2)' }}
+            />
+            <div>
+              <div style={{ fontWeight: 'bold', fontSize: 16 }}>{campaign.user_id?.name || campaign.user_id?.username || "Anonymous"}</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ textTransform: 'capitalize' }}>{campaign.user_id?.role || 'Student'}</span>
+                {campaign.user_id?.college && (
+                  <>
+                    <span>•</span>
+                    <span style={{ background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 4 }}>{campaign.user_id.college}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Donation Progress / Type Info */}
           <div style={{ marginBottom: 25 }}>
             {campaign.donation_type === 'Items' ? (
@@ -250,6 +251,27 @@ export default function CampaignDetail() {
               {campaign.description}
             </p>
           </div>
+
+          {/* Approved Badge (Moved Here) */}
+          {campaign.status === 'approved' && (
+            <div style={{ background: 'rgba(40, 167, 69, 0.15)', borderLeft: '4px solid #28a745', padding: 15, borderRadius: 8, marginBottom: 30, display: 'flex', gap: 15, alignItems: 'center' }}>
+              <div style={{ position: 'relative' }}>
+                {campaign.approved_by_id?.profile_picture ? (
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', border: '1px solid #28a745' }}>
+                    <img src={campaign.approved_by_id.profile_picture} alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                ) : (
+                  <div style={{ color: '#28a745', fontSize: 20 }}>✓</div>
+                )}
+              </div>
+              <div>
+                <strong style={{ color: '#28a745', fontSize: 14, display: 'block', marginBottom: 2 }}>✓ Verified & Approved</strong>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
+                  Verified by <span style={{ fontWeight: 'bold' }}>{campaign.approved_by_id?.name || 'Administrator'}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: 15 }}>

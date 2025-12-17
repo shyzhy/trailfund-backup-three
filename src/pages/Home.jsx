@@ -366,7 +366,7 @@ export default function Home() {
 
       {/* Top Requests */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 'bold', margin: 0, color: 'white' }}>Top Requests</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 'bold', margin: 0, color: 'white' }}>Top Campaigns</h2>
         <Link to="/campaigns?tab=requests" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14 }}>
           See All <span>→</span>
         </Link>
@@ -383,13 +383,26 @@ export default function Home() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <img src={campaign.avatar || "https://i.pravatar.cc/150?img=10"} alt="User" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.5)' }} />
+                  <img src={campaign.user_id?.profile_picture || "https://i.pravatar.cc/150?img=10"} alt="User" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.5)' }} />
                   <div>
-                    <div style={{ fontWeight: 'bold', fontSize: 14 }}>{campaign.ownerName || "Anonymous"}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>Student <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: 4 }}>CITC</span></div>
+                    <div style={{ fontWeight: 'bold', fontSize: 14 }}>{campaign.user_id?.name || campaign.user_id?.username || "Anonymous"}</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', textTransform: 'capitalize' }}>
+                      {campaign.user_id?.role || 'Student'}
+                      {campaign.user_id?.college && (
+                        <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: 4, marginLeft: 4 }}>
+                          {campaign.user_id.college}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <span style={{ color: '#FF6B6B', border: '1px solid #FF6B6B', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 'bold', background: 'rgba(255, 107, 107, 0.1)' }}>Urgent</span>
+                {campaign.end_date ? (
+                  <span style={{ color: '#FFC107', border: '1px solid #FFC107', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 'bold', background: 'rgba(255, 193, 7, 0.1)' }}>
+                    {Math.ceil((new Date(campaign.end_date) - new Date()) / (1000 * 60 * 60 * 24))} Days Left
+                  </span>
+                ) : (
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>No Deadline</span>
+                )}
               </div>
 
               <h3 style={{ fontSize: 16, fontWeight: 'bold', margin: '0 0 8px 0' }}>{campaign.name}</h3>
@@ -398,7 +411,11 @@ export default function Home() {
               </p>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>#campaign #help</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+                  {campaign.tags && campaign.tags.length > 0
+                    ? campaign.tags.map(tag => `#${tag} `)
+                    : '#campaign #help'}
+                </div>
                 <Link to={`/campaigns/${campaign._id}`}>
                   <button className="btn" style={{ background: '#007BFF', color: 'white', fontSize: 14, padding: '8px 20px', boxShadow: '0 4px 12px rgba(0, 123, 255, 0.4)' }}>Donate</button>
                 </Link>
@@ -408,6 +425,77 @@ export default function Home() {
         ) : (
           <div style={{ color: 'rgba(255,255,255,0.7)', padding: 20, textAlign: 'center', width: '100%' }}>
             No active campaigns yet. Be the first to start one!
+          </div>
+        )}
+      </div>
+
+      {/* Real Top Requests Section */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, marginTop: 10 }}>
+        <h2 style={{ fontSize: 20, fontWeight: 'bold', margin: 0, color: 'white' }}>Top Requests</h2>
+        <Link to="/requests" style={{ color: 'rgba(255,255,255,0.8)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14 }}>
+          See All <span>→</span>
+        </Link>
+      </div>
+
+      <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 20, scrollbarWidth: 'none' }}>
+        {requests.length > 0 ? (
+          requests
+            .filter(r => r.status !== 'completed') // Optional: Hide completed
+            .sort((a, b) => {
+              // Sort by Urgency (Red > Yellow > Green) then Date
+              const urgencyOrder = { 'Red': 3, 'Yellow': 2, 'Green': 1 };
+              const urgencyDiff = (urgencyOrder[b.urgency] || 0) - (urgencyOrder[a.urgency] || 0);
+              if (urgencyDiff !== 0) return urgencyDiff;
+              return new Date(b.date_created) - new Date(a.date_created);
+            })
+            .slice(0, 5) // Top 5
+            .map((request) => (
+              <div key={request._id} className="glass-card" style={{
+                minWidth: 280,
+                padding: 20,
+                color: 'white',
+                background: 'linear-gradient(135deg, rgba(0, 59, 92, 0.8), rgba(0, 89, 130, 0.8))', // Darker blue as per screenshot
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <img src={request.user_id?.profile_picture || "https://i.pravatar.cc/150?img=12"} alt="User" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.5)' }} />
+                    <div>
+                      <div style={{ fontWeight: 'bold', fontSize: 14 }}>{request.user_id?.name || request.user_id?.username || "Anonymous"}</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', textTransform: 'capitalize' }}>
+                        {request.user_id?.role || 'Student'}
+                        {request.user_id?.college && (
+                          <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: 4, marginLeft: 4 }}>
+                            {request.user_id.college}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {request.urgency === 'Red' && (
+                    <span style={{ color: '#FF6B6B', border: '1px solid #FF6B6B', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 'bold', background: 'rgba(255, 107, 107, 0.1)' }}>Urgent</span>
+                  )}
+                  {request.urgency === 'Yellow' && (
+                    <span style={{ color: '#FFC107', border: '1px solid #FFC107', padding: '4px 12px', borderRadius: 12, fontSize: 12, fontWeight: 'bold', background: 'rgba(255, 193, 7, 0.1)' }}>Needed</span>
+                  )}
+                </div>
+
+                <h3 style={{ fontSize: 16, fontWeight: 'bold', margin: '0 0 8px 0' }}>{request.title}</h3>
+                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, marginBottom: 16 }}>
+                  {request.description ? request.description.substring(0, 60) + "..." : "No description"}
+                </p>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>#request #{request.request_type?.toLowerCase()}</div>
+                  <Link to={`/requests/${request._id}`}>
+                    <button className="btn" style={{ background: '#007BFF', color: 'white', fontSize: 14, padding: '8px 20px', boxShadow: '0 4px 12px rgba(0, 123, 255, 0.4)' }}>Help</button>
+                  </Link>
+                </div>
+              </div>
+            ))
+        ) : (
+          <div style={{ color: 'rgba(255,255,255,0.7)', padding: 20, textAlign: 'center', width: '100%' }}>
+            No active requests.
           </div>
         )}
       </div>

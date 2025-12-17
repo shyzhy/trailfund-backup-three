@@ -6,6 +6,7 @@ const Post = require('../models/Post');
 const User = require('../models/User');
 const Comment = require('../models/Comment');
 const Notification = require('../models/Notification');
+const Donation = require('../models/Donation');
 const Report = require('../models/Report');
 const Announcement = require('../models/Announcement');
 
@@ -354,8 +355,18 @@ router.get('/campaigns/:id', async (req, res) => {
         const campaign = await Campaign.findById(req.params.id)
             .populate('approved_by_id', 'name profile_picture')
             .populate('user_id', 'name username profile_picture')
-            .populate('donations.user_id', 'name profile_picture');
+            .lean(); // Use lean to allow modifying the object
+
         if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
+
+        // Fetch donations for this campaign
+        const donations = await Donation.find({ campaign_id: campaign._id })
+            .populate('user_id', 'name profile_picture')
+            .sort({ date: -1 });
+
+        // Attach donations to the campaign object for frontend compatibility
+        campaign.donations = donations;
+
         res.json(campaign);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -444,7 +455,7 @@ router.post('/campaigns/:id/revise', async (req, res) => {
 // Get all requests
 router.get('/requests', async (req, res) => {
     try {
-        const requests = await Request.find().populate('user_id', 'name username').sort({ createdAt: -1 });
+        const requests = await Request.find().populate('user_id', 'name username profile_picture').sort({ createdAt: -1 });
         res.json(requests);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -728,20 +739,16 @@ router.post('/campaigns/:id/donate', async (req, res) => {
         const campaign = await Campaign.findById(req.params.id);
         if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
 
-        const donation = {
+        const donation = new Donation({
+            campaign_id: campaign._id,
             user_id: user_id,
             amount: amount,
             item_type: item_type,
-            receipt: receipt, // Base64 string
-            status: 'pending', // Pending verification
-            date: Date.now()
-        };
+            receipt: receipt,
+            status: 'pending'
+        });
 
-        campaign.donations.push(donation);
-
-        // Note: keeping raised as is until verified
-
-        await campaign.save();
+        await donation.save();
 
         // Notify Owner
         const notification = new Notification({
@@ -753,7 +760,7 @@ router.post('/campaigns/:id/donate', async (req, res) => {
         });
         await notification.save();
 
-        res.json(campaign);
+        res.json({ message: 'Donation submitted' }); // Frontend reloads anyway, so full object optional
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -762,24 +769,26 @@ router.post('/campaigns/:id/donate', async (req, res) => {
 // Verify a donation
 router.put('/campaigns/:id/donations/:donationId/verify', async (req, res) => {
     try {
-        const campaign = await Campaign.findById(req.params.id);
-        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
-
-        const donation = campaign.donations.id(req.params.donationId);
+        // Find Donation directly
+        const donation = await Donation.findById(req.params.donationId);
         if (!donation) return res.status(404).json({ message: 'Donation not found' });
 
         if (donation.status === 'verified') {
             return res.status(400).json({ message: 'Donation already verified' });
         }
 
+        // Find Campaign to update raised amount
+        const campaign = await Campaign.findById(donation.campaign_id);
+        if (!campaign) return res.status(404).json({ message: 'Associated Campaign not found' });
+
         donation.status = 'verified';
+        await donation.save();
 
         // Update raised amount if it's monetary
         if (donation.amount) {
             campaign.raised = (campaign.raised || 0) + Number(donation.amount);
+            await campaign.save();
         }
-
-        await campaign.save();
 
         // Notify Donor
         const notification = new Notification({
@@ -800,21 +809,21 @@ router.put('/campaigns/:id/donations/:donationId/verify', async (req, res) => {
 // Reject a donation
 router.put('/campaigns/:id/donations/:donationId/reject', async (req, res) => {
     try {
-        const campaign = await Campaign.findById(req.params.id);
-        if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
-
-        const donation = campaign.donations.id(req.params.donationId);
+        const donation = await Donation.findById(req.params.donationId);
         if (!donation) return res.status(404).json({ message: 'Donation not found' });
+
+        const campaign = await Campaign.findById(donation.campaign_id);
+        if (!campaign) return res.status(404).json({ message: 'Associated Campaign not found' });
 
         if (donation.status === 'verified') {
             if (donation.amount) {
                 campaign.raised = Math.max(0, (campaign.raised || 0) - Number(donation.amount));
+                await campaign.save();
             }
         }
 
         donation.status = 'rejected';
-
-        await campaign.save();
+        await donation.save();
 
         // Notify Donor
         const notification = new Notification({

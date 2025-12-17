@@ -22,7 +22,8 @@ export default function CreateCampaign() {
     itemType: '',
     accountNumber: '',
     endDate: '',
-    image: ''
+    image: '',
+    hashtags: ''
   });
 
   const fileInputRef = useRef(null);
@@ -45,8 +46,10 @@ export default function CreateCampaign() {
             digitalPaymentType: data.digital_payment_type || 'GCash',
             itemType: data.item_type || '',
             accountNumber: data.account_number || '',
+            accountNumber: data.account_number || '',
             endDate: data.end_date ? new Date(data.end_date).toISOString().split('T')[0] : '',
-            image: data.image || ''
+            image: data.image || '',
+            hashtags: data.tags ? data.tags.join(', ') : ''
           });
         })
         .catch(err => console.error(err));
@@ -117,8 +120,10 @@ export default function CreateCampaign() {
         item_type: formData.itemType,
         account_number: formData.accountNumber,
         designated_site: formData.designatedSite,
+        designated_site: formData.designatedSite,
         end_date: formData.endDate,
-        image: formData.image
+        image: formData.image,
+        tags: formData.hashtags.split(',').map(tag => tag.trim()).filter(tag => tag)
       };
 
       const url = isEditMode ? `${API_BASE_URL}/api/campaigns/${id}` : `${API_BASE_URL}/api/campaigns`;
@@ -285,6 +290,19 @@ export default function CreateCampaign() {
             rows={4}
             placeholder="Describe your campaign goals..."
             style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white', outline: 'none', resize: 'none' }}
+          />
+        </div>
+
+        {/* Hashtags */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>Hashtags</label>
+          <input
+            name="hashtags"
+            value={formData.hashtags}
+            onChange={handleChange}
+            type="text"
+            placeholder="e.g., education, networking, books (comma separated)"
+            style={{ width: '100%', padding: '12px 12px 12px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: 'white', outline: 'none' }}
           />
         </div>
 

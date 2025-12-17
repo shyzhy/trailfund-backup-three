@@ -21,6 +21,15 @@ export default function Profile() {
   const [modalType, setModalType] = useState('success'); // success, error, warning, pending
   const [modalMessage, setModalMessage] = useState('');
 
+  // Settings Modals State
+  const [activeSettingsModal, setActiveSettingsModal] = useState(null); // 'username', 'password', null
+  const [settingsForm, setSettingsForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    newUsername: ''
+  });
+
   const { id } = useParams();
 
   // Fetch user data
@@ -53,6 +62,13 @@ export default function Profile() {
           if (reqResponse.ok) {
             const userRequests = await reqResponse.json();
             setRequests(userRequests);
+          }
+
+          // Fetch user's campaigns
+          const campResponse = await fetch(`${API_BASE_URL}/api/users/${userId}/campaigns`);
+          if (campResponse.ok) {
+            const userCampaigns = await campResponse.json();
+            setUser(prev => ({ ...prev, campaigns: userCampaigns }));
           }
 
           // Fetch user's posts
@@ -138,6 +154,83 @@ export default function Profile() {
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/login');
+  };
+
+  const handleSettingsChange = (e) => {
+    const { name, value } = e.target;
+    setSettingsForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdateUsername = async () => {
+    if (!settingsForm.newUsername.trim()) return;
+
+    try {
+      // Re-use the existing update profile endpoint
+      const response = await fetch(`${API_BASE_URL}/api/users/${user._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: settingsForm.newUsername })
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(prev => ({ ...prev, username: data.user.username }));
+        // Update local storage
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        if (currentUser && currentUser._id === user._id) {
+          localStorage.setItem('user', JSON.stringify({ ...currentUser, username: data.user.username }));
+        }
+        setActiveSettingsModal(null);
+        setModalType('success');
+        setModalMessage('Username updated successfully!');
+        setModalOpen(true);
+      } else {
+        setModalType('error');
+        setModalMessage(data.message || 'Failed to update username');
+        setModalOpen(true);
+      }
+    } catch (err) {
+      setModalType('error');
+      setModalMessage('An error occurred');
+      setModalOpen(true);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (settingsForm.newPassword !== settingsForm.confirmPassword) {
+      setModalType('error');
+      setModalMessage('New passwords do not match');
+      setModalOpen(true);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/users/${user._id}/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: settingsForm.currentPassword,
+          newPassword: settingsForm.newPassword
+        })
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        setActiveSettingsModal(null);
+        setSettingsForm({ currentPassword: '', newPassword: '', confirmPassword: '', newUsername: '' });
+        setModalType('success');
+        setModalMessage('Password updated successfully!');
+        setModalOpen(true);
+      } else {
+        setModalType('error');
+        setModalMessage(data.message || 'Failed to update password');
+        setModalOpen(true);
+      }
+    } catch (err) {
+      setModalType('error');
+      setModalMessage('An error occurred');
+      setModalOpen(true);
+    }
   };
 
   if (!user) return null;
@@ -389,14 +482,94 @@ export default function Profile() {
         </div>
 
         {/* Account Settings */}
-        {showSettings && (
-          <div style={{ marginBottom: 30, animation: 'fadeIn 0.3s ease' }}>
-            <h3 style={{ fontSize: 18, marginBottom: 15 }}>Account Settings</h3>
-            <div className="glass-card" style={{ padding: 5, display: 'flex', flexDirection: 'column' }}>
-              <SettingsItem icon={<FaKey />} label="Change Password" onClick={() => alert('Change Password Clicked')} />
-              <SettingsItem icon={<FaUserCog />} label="Change Username" onClick={() => alert('Change Username Clicked')} />
-              <SettingsItem icon={<FaLink />} label="Link USTEP Account" onClick={() => alert('Link USTEP Clicked')} />
-              <SettingsItem icon={<FaSignOutAlt />} label="Log Out" onClick={handleLogout} style={{ color: '#FF6B6B' }} />
+        <div style={{ marginBottom: 30, animation: 'fadeIn 0.3s ease' }}>
+          <h3 style={{ fontSize: 18, marginBottom: 15 }}>Account Settings</h3>
+          <div className="glass-card" style={{ padding: 5, display: 'flex', flexDirection: 'column' }}>
+            <SettingsItem icon={<FaKey />} label="Change Password" onClick={() => {
+              setSettingsForm(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
+              setActiveSettingsModal('password');
+            }} />
+            <SettingsItem icon={<FaUserCog />} label="Change Username" onClick={() => {
+              setSettingsForm(prev => ({ ...prev, newUsername: user.username }));
+              setActiveSettingsModal('username');
+            }} />
+            {/* Removed USTEP Link */}
+            <SettingsItem icon={<FaSignOutAlt />} label="Log Out" onClick={handleLogout} style={{ color: '#FF6B6B' }} />
+          </div>
+        </div>
+
+
+        {/* Settings Modals Overlay */}
+        {activeSettingsModal && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)', zIndex: 100,
+            display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 20
+          }}>
+            <div className="glass-card" style={{ width: '100%', maxWidth: 350, padding: 25, background: '#002B45', border: '1px solid rgba(255,255,255,0.2)' }}>
+              <h3 style={{ marginTop: 0, marginBottom: 20 }}>
+                {activeSettingsModal === 'username' ? 'Change Username' : 'Change Password'}
+              </h3>
+
+              {activeSettingsModal === 'username' ? (
+                <>
+                  <div style={{ marginBottom: 15 }}>
+                    <label style={{ display: 'block', marginBottom: 8, fontSize: 14 }}>New Username</label>
+                    <input
+                      type="text"
+                      name="newUsername"
+                      value={settingsForm.newUsername}
+                      onChange={handleSettingsChange}
+                      style={inputStyle}
+                      placeholder="Enter new username"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                    <button onClick={() => setActiveSettingsModal(null)} style={{ flex: 1, padding: 10, background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', borderRadius: 8, cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={handleUpdateUsername} style={{ flex: 1, padding: 10, background: 'var(--accent-color)', border: 'none', color: 'white', borderRadius: 8, cursor: 'pointer' }}>Save</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ marginBottom: 15 }}>
+                    <label style={{ display: 'block', marginBottom: 8, fontSize: 14 }}>Current Password</label>
+                    <input
+                      type="password"
+                      name="currentPassword"
+                      value={settingsForm.currentPassword}
+                      onChange={handleSettingsChange}
+                      style={inputStyle}
+                      placeholder="Enter current password"
+                    />
+                  </div>
+                  <div style={{ marginBottom: 15 }}>
+                    <label style={{ display: 'block', marginBottom: 8, fontSize: 14 }}>New Password</label>
+                    <input
+                      type="password"
+                      name="newPassword"
+                      value={settingsForm.newPassword}
+                      onChange={handleSettingsChange}
+                      style={inputStyle}
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                  <div style={{ marginBottom: 15 }}>
+                    <label style={{ display: 'block', marginBottom: 8, fontSize: 14 }}>Confirm New Password</label>
+                    <input
+                      type="password"
+                      name="confirmPassword"
+                      value={settingsForm.confirmPassword}
+                      onChange={handleSettingsChange}
+                      style={inputStyle}
+                      placeholder="Confirm new password"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                    <button onClick={() => setActiveSettingsModal(null)} style={{ flex: 1, padding: 10, background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', borderRadius: 8, cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={handleUpdatePassword} style={{ flex: 1, padding: 10, background: 'var(--accent-color)', border: 'none', color: 'white', borderRadius: 8, cursor: 'pointer' }}>Update</button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -456,7 +629,7 @@ export default function Profile() {
                   style={{ padding: 15, cursor: 'pointer' }}
                   onClick={() => navigate(`/campaigns/${camp._id || camp.id}`)}
                 >
-                  <h4 style={{ margin: '0 0 5px 0' }}>{camp.title}</h4>
+                  <h4 style={{ margin: '0 0 5px 0' }}>{camp.name || camp.title}</h4>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
                     Raised: ₱{(camp.raised || 0).toLocaleString()} / ₱{(camp.target_amount || camp.goal || 0).toLocaleString()}
                   </div>

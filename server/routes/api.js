@@ -178,6 +178,26 @@ router.put('/users/:id', async (req, res) => {
 
 });
 
+// Change Password
+router.post('/users/:id/change-password', async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        if (user.password !== currentPassword) {
+            return res.status(400).json({ message: 'Incorrect current password' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Send Friend Request
 router.post('/users/:id/friend', async (req, res) => {
     const { current_user_id } = req.body;
@@ -286,6 +306,16 @@ router.get('/users/:id/requests', async (req, res) => {
     try {
         const requests = await Request.find({ user_id: req.params.id }).sort({ createdAt: -1 });
         res.json(requests);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Get campaigns by user
+router.get('/users/:id/campaigns', async (req, res) => {
+    try {
+        const campaigns = await Campaign.find({ user_id: req.params.id }).sort({ createdAt: -1 });
+        res.json(campaigns);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
